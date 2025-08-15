@@ -1,3 +1,6 @@
+// 🚨 Import gesture-handler FIRST — very important for Android release builds
+import 'react-native-gesture-handler';
+import 'react-native-reanimated';
 import { useEffect, useState } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
@@ -8,24 +11,38 @@ export default function Index() {
   const { token, user, checkAuth } = useAuthStore();
   const [loading, setLoading] = useState(true);
 
+  // Initialize auth safely
   useEffect(() => {
     const init = async () => {
-      await checkAuth(); 
-      setLoading(false);
+      try {
+        if (checkAuth && typeof checkAuth === "function") {
+          await checkAuth();
+        }
+      } catch (error) {
+        console.log("Auth check failed:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     init();
-  }, []);
+  }, [checkAuth]);
 
+  // Redirect after loading
   useEffect(() => {
     if (!loading) {
-      if (token && user) {
-        router.replace("/home");
-      } else {
-        router.replace("/login");
+      try {
+        if (token && user) {
+          router.replace("/home");
+        } else {
+          router.replace("/login");
+        }
+      } catch (error) {
+        console.log("Routing failed:", error);
       }
     }
-  }, [loading, token, user]);
+  }, [loading, token, user, router]);
 
+  // Loading screen
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>

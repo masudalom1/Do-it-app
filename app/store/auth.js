@@ -74,21 +74,31 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  checkAuth: async () => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const userJSON = await AsyncStorage.getItem("user");
-      const user = userJSON ? JSON.parse(userJSON) : null;
+ checkAuth: async () => {
+  try {
+    const token = await AsyncStorage.getItem("token");
+    const userJSON = await AsyncStorage.getItem("user");
 
-      if (token && user) {
-        set({ token, user });
-      } else {
-        set({ token: null, user: null });
+    let user = null;
+    if (userJSON) {
+      try {
+        user = JSON.parse(userJSON);
+      } catch (parseError) {
+        console.warn("Failed to parse user from storage:", parseError);
+        user = null;
       }
-    } catch (error) {
-      console.log("Auth check failed", error);
     }
-  },
+
+    if (token && user) {
+      set({ token, user });
+    } else {
+      set({ token: null, user: null });
+    }
+  } catch (error) {
+    console.error("Auth check failed:", error);
+    set({ token: null, user: null });
+  }
+},
 
 logout: async () => {
     try {
